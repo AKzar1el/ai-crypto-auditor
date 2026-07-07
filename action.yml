@@ -12,6 +12,14 @@ inputs:
   gemini-api-key:
     description: 'Your Gemini API Key for code auditing'
     required: true
+  exclude-paths:
+    description: 'Comma-separated glob patterns of files to exclude from audit (e.g. *.lock,*.json)'
+    required: false
+    default: ''
+  gemini-model:
+    description: 'Gemini model to use for auditing (e.g. gemini-1.5-pro, gemini-1.5-flash)'
+    required: false
+    default: 'gemini-1.5-pro'
 runs:
   using: 'node20'
   main: 'dist/index.js'

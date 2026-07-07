@@ -1,7 +1,7 @@
 import core from '@actions/core';
 import github from '@actions/github';
 
-async function auditCode(filename, content, apiKey) {
+async function auditCode(filename, content, apiKey, model) {
   const prompt = `You are an expert Web3 smart contract security auditor.
 Analyze the following code for security vulnerabilities (e.g., reentrancy, flash loan attacks, overflow/underflow, access control flaws), logic issues, performance bottlenecks, or gas optimization opportunities.
 
@@ -19,7 +19,7 @@ ${content}
 \`\`\`
 `;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   
   const response = await fetch(url, {
     method: 'POST',
@@ -37,10 +37,27 @@ ${content}
   return result.candidates?.[0]?.content?.parts?.[0]?.text || "No auditing feedback generated.";
 }
 
+function shouldExclude(filename, patternsStr) {
+  if (!patternsStr) return false;
+  const patterns = patternsStr.split(',').map(p => p.trim()).filter(Boolean);
+  return patterns.some(pattern => {
+    // Simple glob matching
+    const regexStr = '^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$';
+    try {
+      const regex = new RegExp(regexStr);
+      return regex.test(filename) || filename.includes(pattern);
+    } catch {
+      return filename.includes(pattern);
+    }
+  });
+}
+
 async function run() {
   try {
     const githubToken = core.getInput('github-token');
     const geminiApiKey = core.getInput('gemini-api-key');
+    const excludePaths = core.getInput('exclude-paths');
+    const geminiModel = core.getInput('gemini-model') || 'gemini-1.5-pro';
 
     const octokit = github.getOctokit(githubToken);
     const context = github.context;
@@ -69,7 +86,12 @@ async function run() {
         continue;
       }
 
-      core.info(`Auditing ${file.filename}...`);
+      if (shouldExclude(file.filename, excludePaths)) {
+        core.info(`Skipping excluded file: ${file.filename}`);
+        continue;
+      }
+
+      core.info(`Auditing ${file.filename} using model ${geminiModel}...`);
 
       // Fetch file content
       const { data: fileContentData } = await octokit.rest.repos.getContent({
@@ -82,13 +104,13 @@ async function run() {
       const content = Buffer.from(fileContentData.content, 'base64').toString('utf-8');
 
       try {
-        const auditReport = await auditCode(file.filename, content, geminiApiKey);
+        const auditReport = await auditCode(file.filename, content, geminiApiKey, geminiModel);
 
         const commentBody = `### 🛡️ AI Crypto Auditor Report for \`${file.filename}\`
         
 ${auditReport}
 
-*Audited automatically by [AI Crypto Auditor](https://github.com/${owner}/${repo}) using Gemini AI.*
+*Audited automatically by [AI Crypto Auditor](https://github.com/${owner}/${repo}) using Gemini AI (${geminiModel}).*
 `;
 
         // Post comment to PR
@@ -111,3 +133,4 @@ ${auditReport}
 }
 
 run();
+
