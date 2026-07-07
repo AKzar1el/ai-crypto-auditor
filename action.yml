@@ -10,16 +10,27 @@ inputs:
     required: true
     default: '${{ github.token }}'
   gemini-api-key:
-    description: 'Your Gemini API Key for code auditing'
-    required: true
+    description: 'Your Gemini API Key (deprecated: use api-key instead)'
+    required: false
+  api-key:
+    description: 'Your LLM API Key (OpenAI, Anthropic, Gemini, DeepSeek, Groq, OpenRouter)'
+    required: false
+  api-provider:
+    description: 'The LLM provider to use (gemini, openai, anthropic, deepseek, groq, openrouter)'
+    required: false
+    default: 'gemini'
   exclude-paths:
     description: 'Comma-separated glob patterns of files to exclude from audit (e.g. *.lock,*.json)'
     required: false
     default: ''
   gemini-model:
-    description: 'Gemini model to use for auditing (e.g. gemini-1.5-pro, gemini-1.5-flash)'
+    description: 'Gemini model to use (deprecated: use model instead)'
     required: false
-    default: 'gemini-1.5-pro'
+    default: ''
+  model:
+    description: 'The LLM model to use (e.g., gemini-1.5-pro, gpt-4o, claude-3-5-sonnet-latest)'
+    required: false
+    default: ''
 runs:
   using: 'node20'
   main: 'dist/index.js'
