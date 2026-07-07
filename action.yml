@@ -1,5 +1,5 @@
 name: 'AI Crypto Auditor'
-description: 'Automatically audits smart contracts and crypto code for security vulnerabilities, logic flaws, and gas optimizations using Gemini AI.'
+description: 'AI security auditor for Solidity, Rust, and crypto trading scripts on every Pull Request.'
 author: 'AKzar1el'
 branding:
   icon: 'shield'
