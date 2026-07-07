@@ -1,0 +1,17 @@
+name: 'AI Crypto Auditor'
+description: 'Automatically audits smart contracts and crypto code for security vulnerabilities, logic flaws, and gas optimizations using Gemini AI.'
+author: 'AKzar1el'
+branding:
+  icon: 'shield'
+  color: 'blue'
+inputs:
+  github-token:
+    description: 'The GitHub authentication token (defaults to secrets.GITHUB_TOKEN)'
+    required: true
+    default: '${{ github.token }}'
+  gemini-api-key:
+    description: 'Your Gemini API Key for code auditing'
+    required: true
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
