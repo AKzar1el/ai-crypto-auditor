@@ -27,6 +27,26 @@ jobs:
       - name: Verify Build
         run: pnpm run build
 
+      # TEMPORARY diagnostic: compiled public action code is already committed
+      # in this public repository. Capture exact CI bytes before the strict
+      # consistency check; remove this step in the next review commit.
+      - name: Temporary public dist reproducibility receipt
+        if: github.event_name == 'pull_request'
+        run: |
+          python3 - <<'PY'
+          import base64
+          import gzip
+          import hashlib
+          from pathlib import Path
+
+          bundle = Path("dist/index.js").read_bytes()
+          encoded = base64.b64encode(gzip.compress(bundle, compresslevel=9, mtime=0)).decode("ascii")
+          print("GPAUDIT_BUNDLE_BEGIN sha256=" + hashlib.sha256(bundle).hexdigest() + " b64chars=" + str(len(encoded)))
+          for start in range(0, len(encoded), 2048):
+              print("GPAUDIT_BUNDLE_CHUNK " + str(start // 2048) + " " + encoded[start:start + 2048])
+          print("GPAUDIT_BUNDLE_END")
+          PY
+
       - name: Check for Uncommitted Changes in dist
         run: |
           if [ -n "$(git status --porcelain dist/)" ]; then
