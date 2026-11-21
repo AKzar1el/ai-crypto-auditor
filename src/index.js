@@ -141,7 +141,7 @@ async function run() {
       const { data: fileContentData } = await octokit.rest.repos.getContent({
         owner,
         repo,
-        path: file.path,
+        path: file.filename,
         ref: context.payload.pull_request.head.sha
       });
 
